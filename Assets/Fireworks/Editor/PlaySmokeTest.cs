@@ -56,6 +56,7 @@ namespace Fireworks.EditorTools
             if (_startReal < 0)
             {
                 _startReal = real;
+                AudioListener.volume = 0f; // batch test: silent, the show's own volumes stay untouched
                 var bank = show.sfx != null ? show.sfx.bank : null;
                 Debug.Log($"[Smoke] start: cues={(show.cueSheet ? show.cueSheet.name : "none")} music={(show.music ? show.music.name : "none")} " +
                           $"sfxClips={(bank ? bank.ClipCount() : 0)} cueCount={show.Data?.cues.Length} leadIn={show.LeadIn:0.00}s end={show.EndTime:0.0}s");

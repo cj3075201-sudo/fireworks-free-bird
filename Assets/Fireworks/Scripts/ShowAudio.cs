@@ -23,7 +23,8 @@ namespace Fireworks
         [Range(1, 8)] public int loopVoices = 3;
 
         [Header("Mix")]
-        [Range(0f, 1f)] public float sfxVolume = 0.9f;
+        [Tooltip("Master SFX gain. The WAVs are pre-mixed for 1.0.")]
+        [Range(0f, 1f)] public float sfxVolume = 1f;
         [Tooltip("How far sounds pan with the firework's x position (0 = centred)")]
         [Range(0f, 1f)] public float panWidth = 0.6f;
 

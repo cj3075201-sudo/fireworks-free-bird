@@ -211,18 +211,19 @@ namespace Fireworks
             foreach (var s in _schedule)
             {
                 var c = s.cue;
-                float loud = Mathf.Lerp(0.45f, 1f, Mathf.InverseLerp(ShowData.MinScale, ShowData.MaxScale, c.scale));
+                // SFX files are pre-mixed for volume 1.0 (Tools side). Scale only turns small shells down: 0.6 → 0.6, ≥1.0 → 1.0.
+                float loud = Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(ShowData.MinScale, 1f, c.scale));
                 if (c.Type == FireworkType.Fountain)
                 {
-                    _sounds.Add(new SoundEvent { time = s.burst, loopOwner = s.index, volume = 0.55f * loud, x = c.x });
+                    _sounds.Add(new SoundEvent { time = s.burst, loopOwner = s.index, volume = loud, x = c.x });
                     _sounds.Add(new SoundEvent { time = s.end, loopOwner = -1 - s.index, x = c.x });
                     continue;
                 }
 
                 // Launch thump, and a whistle on comets and on some tall shells.
-                _sounds.Add(OneShot(s.launch, SfxKind.Launch, 0.5f * loud, Pitch(r, 0.9f, 1.1f), c.x));
+                _sounds.Add(OneShot(s.launch, SfxKind.Launch, loud, Pitch(r, 0.9f, 1.1f), c.x));
                 bool whistle = c.Type == FireworkType.Comet || (c.h >= 85f && r.NextDouble() < 0.2);
-                if (whistle) _sounds.Add(OneShot(s.launch + 0.05, SfxKind.Whistle, 0.4f * loud, Pitch(r, 0.92f, 1.08f), c.x));
+                if (whistle) _sounds.Add(OneShot(s.launch + 0.05, SfxKind.Whistle, loud, Pitch(r, 0.92f, 1.08f), c.x));
 
                 if (c.Type == FireworkType.Comet) continue;
 
@@ -235,13 +236,13 @@ namespace Fireworks
                 {
                     case FireworkType.Crossette:
                         for (int k = 0; k < 3; k++)
-                            _sounds.Add(OneShot(s.burst + 1.0 + k * 0.07 + r.NextDouble() * 0.03, SfxKind.Pop, 0.45f * loud, Pitch(r, 1.0f, 1.25f), c.x));
+                            _sounds.Add(OneShot(s.burst + 1.0 + k * 0.07 + r.NextDouble() * 0.03, SfxKind.Pop, loud, Pitch(r, 1.0f, 1.25f), c.x));
                         break;
                     case FireworkType.Strobe:
-                        _sounds.Add(OneShot(s.burst + 0.3, SfxKind.Crackle, 0.6f * loud, Pitch(r, 0.95f, 1.05f), c.x));
+                        _sounds.Add(OneShot(s.burst + 0.3, SfxKind.Crackle, loud, Pitch(r, 0.95f, 1.05f), c.x));
                         break;
                     case FireworkType.Willow:
-                        _sounds.Add(OneShot(s.burst + 2.0, SfxKind.Crackle, 0.35f * loud, Pitch(r, 0.85f, 0.95f), c.x));
+                        _sounds.Add(OneShot(s.burst + 2.0, SfxKind.Crackle, loud, Pitch(r, 0.85f, 0.95f), c.x));
                         break;
                 }
             }
