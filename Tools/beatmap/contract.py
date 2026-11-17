@@ -33,10 +33,11 @@ RATE_WINDOW = 1.0
 # a bare time t means (t, t + 1 s).
 
 # Particle load: a shell counts as `scale` units while it is alive (seconds after its burst).
-# 40 units is about 30 shells at scale 1.3 on screen at once.
+# Unity measurement (2026-11-17): load ~38 = 19,034 particles, i.e. ~500 particles per unit; budget
+# 30,000. 48 units ~ 24,000 particles (lead allowed up to 55 ~ 27,000).
 LIFETIME = {"peony": 2.5, "chrysanthemum": 3.0, "willow": 5.0, "ring": 2.5, "crossette": 3.0, "strobe": 3.0,
             "palm": 3.5, "comet": 2.0}
-LOAD_CAP = 40.0
+LOAD_CAP = 48.0
 
 
 def counts_toward_rate(cue: dict) -> bool:

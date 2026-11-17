@@ -865,9 +865,9 @@ class SlowBurn(Show):
             k += 1
 
     def eruption(self, drop: float) -> float:
-        """The drop is not one bang but ~2 bars of eruption (8-10 shells/s): a full-width salvo on the
-        drop, its bloom, symmetric big chrysanthemum/peony volleys spreading out to both edges, one
-        held beat, and a gold willow curtain on the last beat. Returns the eruption's end time."""
+        """The drop is not one bang but ~2 bars of eruption (8-10 shells/s, a shell on every beat): a
+        full-width salvo on the drop, then mirrored big chrysanthemum/peony/crossette volleys on every
+        beat spreading out to both edges, and a gold willow curtain on the last beat. Returns the end."""
         P = self.local_period(drop + 2.0)
         beats = self.beats_in(drop, drop + 8 * P - 0.5 * P)
         if len(beats) == 0 or abs(beats[0] - drop) > 1e-3:
@@ -875,31 +875,34 @@ class SlowBurn(Show):
         per_beat = int(np.clip(round(9.0 * P), 3, 6))  # ~9 shells/s whatever the tempo
         pals = ["mixed", "gold", "red", "silver", "mixed", "blue", "gold", "pink", "mixed"]
         kinds = ["peony", "chrysanthemum"]
-        # beat 0: nine shells across the whole sky
-        for i, x in enumerate(np.linspace(-84, 84, 9)):
-            centre = i == 4
-            self.add(drop, "chrysanthemum" if centre else kinds[i % 2], float(x), 20.0 if i % 2 == 0 else 4.0,
-                     "gold" if centre else pals[i], 1.5 if centre else 1.4, 100,
-                     h=112 if centre else (104 if i % 2 else 92), hit=centre)
+        # beat 0: eight big shells across the whole sky (mirrored, +-12 .. +-84 m). Eight, not more:
+        # the next two beats must still get a mirrored pair each inside the same 12-per-second window.
+        for i, x in enumerate((-84.0, -60.0, -36.0, -12.0, 12.0, 36.0, 60.0, 84.0)):
+            inner = abs(x) < 20
+            self.add(drop, "chrysanthemum" if inner or i % 2 else "peony", x, 20.0 if i % 2 == 0 else 4.0,
+                     "gold" if inner else pals[i], 1.5 if inner else 1.4, 100,
+                     h=112 if inner else (104 if i % 2 else 92), hit=(i == 3))
         last = float(beats[-1])
-        if len(beats) >= 3:  # the curtain first, so the volleys in between leave room for it
+        bts = [float(b) for b in beats]
+        counts = self._eruption_counts(bts, opening=8, curtain=7 if len(bts) >= 3 else 0)
+        if len(bts) >= 3:
             for i, x in enumerate(np.linspace(-84, 84, 7)):
                 self.add(last, "willow", float(x), 24.0 if i % 2 == 0 else 8.0, "gold", 1.35, 100,
                          h=116 if i % 2 == 0 else 106, hit=(i == 3))
-        mids = [float(b) for b in beats[1:-1]]
+        kinds3 = ["chrysanthemum", "peony", "crossette"]
+        mids = bts[1:-1]
         for j, t in enumerate(mids):
-            room = self._room_ahead(t, C.FINALE_MAX_RATE)  # as many as every 1 s window still allows
-            n = min(room, 2 * max(1, per_beat // 2) + 1)
-            reach = 25.0 + 60.0 * j / max(1, len(mids) - 1)  # volleys spread out to the edges
+            n = counts[j + 1]
+            reach = 30.0 + 56.0 * j / max(1, len(mids) - 1)  # volleys spread out to both edges
             q = 0
             while n >= 2:
-                x = min(86.0, reach + 26.0 * q)
-                self.pair(t, kinds[(j + q) % 2], x, self.row("back" if (j + q) % 2 else "mid"),
-                          pals[(j + q) % len(pals)], 1.3, 95, h=110 if (j + q) % 2 else 90)
+                x = min(86.0, reach + 22.0 * q) if q % 2 == 0 else max(14.0, reach - 22.0 * ((q + 1) // 2))
+                self.pair(t, kinds3[(j + q) % 3], x, self.row("back" if (j + q) % 2 else "mid"),
+                          pals[(j + q) % len(pals)], 1.3, 95, h=112 if (j + q) % 2 else 92)
                 n -= 2
                 q += 1
             if n == 1:
-                self.add(t, "chrysanthemum", self.j(4), self.row("back"), pals[j % len(pals)], 1.35, 95, h=114)
+                self.add(t, kinds3[j % 3], self.j(4), self.row("back"), pals[j % len(pals)], 1.4, 95, h=115)
         return last + P
 
     # ----- after the drop
@@ -969,6 +972,31 @@ class SlowBurn(Show):
         n = sum(1 for c in self.cues if c.type != "fountain" and t - C.RATE_WINDOW + 1e-6 < c.t <= t + 1e-9)
         return max(0, cap - n)
 
+    @staticmethod
+    def _eruption_counts(bts: list[float], opening: int, curtain: int, cap: int = C.FINALE_MAX_RATE,
+                         most: int = 6) -> list[int]:
+        """Shells per eruption beat: the opening salvo and the curtain are fixed; every beat in
+        between gets at least one shell (no holes), as many as any 1 s window allows, spread evenly
+        and preferring even counts (mirrored pairs). Exhaustive search over <= 8 beats."""
+        import itertools
+        m = len(bts)
+        free = list(range(1, m - 1))
+        best, best_key = None, None
+        for combo in itertools.product(range(1, most + 1), repeat=len(free)):
+            c = [opening] + list(combo) + ([curtain] if m > 1 else [])
+            ok = True
+            for a in range(m):
+                if sum(c[b] for b in range(a, m) if bts[b] < bts[a] + C.RATE_WINDOW - 1e-9) > cap:
+                    ok = False
+                    break
+            if not ok:
+                continue
+            key = (min(combo) if combo else 0, sum(1 for v in combo if v % 2 == 0), sum(combo),
+                   -float(np.std(combo)) if combo else 0.0)
+            if best_key is None or key > best_key:
+                best, best_key = c, key
+        return best if best is not None else [opening] + [0] * len(free) + ([curtain] if m > 1 else [])
+
     def _room_ahead(self, t: float, cap: int) -> int:
         """Like _room, but also keeps the windows that end on shells already placed in (t, t+1 s)."""
         later = sorted({c.t for c in self.cues if c.type != "fountain" and t < c.t < t + C.RATE_WINDOW})
@@ -1006,7 +1034,9 @@ class SlowBurn(Show):
         if len(dbs) == 0:
             return base
         entrance = float(dbs[0]) if i > 0 else None
-        breath = self._breath_bar(a, b) if i > 0 and (not final or b - a > 40) else None  # none right after the eruption
+        # breathing room is the empty beat at the end of every stage (lead 2026-11-18: <= 1 bar between
+        # stages); no extra quiet bar inside a stage, so every stage keeps its density
+        breath = None
         # fountains: second stage (8 bars) and the whole finale
         if i == 1 and not final:
             self.add(float(dbs[0]), "fountain", -45.0, -6.0, "gold", 1.0, 70, dur=min(8 * bar, b - dbs[0]))
