@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c1b29b7a9c00e488e92318d1faee8d, type: 3}
+  m_Name: FireworkLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Fireworks.FireworkLibrary
+  prefabs:
+  - {fileID: 1267439023045745970, guid: ed8177e6cf7c1f543b92398bd8e45c52, type: 3}
+  - {fileID: 5669168391575657718, guid: 84a8804f65d46c34585368e12a64d0e0, type: 3}
+  - {fileID: 1707784637924783368, guid: 4f115e0f4821fa64cb4971bf40d73849, type: 3}
+  - {fileID: 2053480586555618029, guid: 01d9e8bdcc7fb3f499e71d0040f5b384, type: 3}
+  - {fileID: 6890254389162171556, guid: 6b6048a7e02d2e041a32af61db1ed0d2, type: 3}
+  - {fileID: 8651808505044175176, guid: 39e52f8333441dc46bb65ff867c94985, type: 3}
+  - {fileID: 6786716893775855076, guid: e783f8a7520039640affdfee87093658, type: 3}
+  - {fileID: 8167644340370387206, guid: fcb7d5839b62f0e46817bcb6a0551d6b, type: 3}
+  - {fileID: 286570725272305475, guid: 750ecdc029c73424e949f622cd8d2b0d, type: 3}
+  palettes:
+  - name: gold
+    primary: {r: 1, g: 0.58, b: 0.15, a: 1}
+    secondary: {r: 1, g: 0.36, b: 0.07, a: 1}
+    mixed: 0
+    mix: []
+  - name: silver
+    primary: {r: 0.86, g: 0.9, b: 1, a: 1}
+    secondary: {r: 0.66, g: 0.76, b: 1, a: 1}
+    mixed: 0
+    mix: []
+  - name: red
+    primary: {r: 1, g: 0.1, b: 0.06, a: 1}
+    secondary: {r: 1, g: 0.42, b: 0.1, a: 1}
+    mixed: 0
+    mix: []
+  - name: orange
+    primary: {r: 1, g: 0.38, b: 0.04, a: 1}
+    secondary: {r: 1, g: 0.7, b: 0.2, a: 1}
+    mixed: 0
+    mix: []
+  - name: green
+    primary: {r: 0.16, g: 1, b: 0.22, a: 1}
+    secondary: {r: 0.72, g: 1, b: 0.16, a: 1}
+    mixed: 0
+    mix: []
+  - name: blue
+    primary: {r: 0.1, g: 0.34, b: 1, a: 1}
+    secondary: {r: 0.42, g: 0.22, b: 1, a: 1}
+    mixed: 0
+    mix: []
+  - name: purple
+    primary: {r: 0.62, g: 0.16, b: 1, a: 1}
+    secondary: {r: 1, g: 0.22, b: 0.7, a: 1}
+    mixed: 0
+    mix: []
+  - name: pink
+    primary: {r: 1, g: 0.26, b: 0.6, a: 1}
+    secondary: {r: 1, g: 0.62, b: 0.86, a: 1}
+    mixed: 0
+    mix: []
+  - name: cyan
+    primary: {r: 0.08, g: 0.86, b: 1, a: 1}
+    secondary: {r: 0.3, g: 0.5, b: 1, a: 1}
+    mixed: 0
+    mix: []
+  - name: mixed
+    primary: {r: 1, g: 0.58, b: 0.15, a: 1}
+    secondary: {r: 1, g: 1, b: 1, a: 1}
+    mixed: 1
+    mix:
+    - {r: 1, g: 0.1, b: 0.06, a: 1}
+    - {r: 1, g: 0.58, b: 0.15, a: 1}
+    - {r: 0.16, g: 1, b: 0.22, a: 1}
+    - {r: 0.1, g: 0.34, b: 1, a: 1}
+    - {r: 0.62, g: 0.16, b: 1, a: 1}
+    - {r: 0.08, g: 0.86, b: 1, a: 1}
+    - {r: 1, g: 0.26, b: 0.6, a: 1}

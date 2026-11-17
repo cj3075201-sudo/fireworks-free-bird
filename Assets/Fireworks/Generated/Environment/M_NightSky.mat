@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_NightSky
+  m_Shader: {fileID: 4800000, guid: c35bb83c0e1432a498d1a25488acc1a6, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _GlowHeight: 11
+    - _StarBrightness: 0.5
+    - _StarChance: 0.11
+    - _StarGrid: 95
+    - _StarPixels: 0.9
+    - _Twinkle: 0.35
+    m_Colors:
+    - _GlowColor: {r: 0.085, g: 0.05, b: 0.05, a: 1}
+    - _GroundColor: {r: 0.002, g: 0.0025, b: 0.004, a: 1}
+    - _HorizonColor: {r: 0.03, g: 0.027, b: 0.05, a: 1}
+    - _ZenithColor: {r: 0.0035, g: 0.0045, b: 0.013, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
