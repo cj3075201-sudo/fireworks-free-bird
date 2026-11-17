@@ -139,8 +139,9 @@ namespace Fireworks.EditorTools
 
             var credit = Group(go.transform, "Credit");
             ui.creditGroup = credit;
-            ui.creditText = Label(credit.transform, "Credit Text", "", 32, new Color(0.92f, 0.9f, 0.88f), new Vector2(0f, 0f));
-            ui.hintText = Label(credit.transform, "Hint", "R  replay      ESC  quit", 20, new Color(0.55f, 0.56f, 0.62f), new Vector2(0f, -70f));
+            // Upper third: the outro shot leaves the skyline around mid-frame.
+            ui.creditText = Label(credit.transform, "Credit Text", "", 32, new Color(0.92f, 0.9f, 0.88f), new Vector2(0f, 190f));
+            ui.hintText = Label(credit.transform, "Hint", "R  replay      ESC  quit", 20, new Color(0.6f, 0.61f, 0.68f), new Vector2(0f, 130f));
             credit.alpha = 0f;
             return ui;
         }

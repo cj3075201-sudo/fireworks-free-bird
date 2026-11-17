@@ -107,6 +107,7 @@ namespace Fireworks.EditorTools
         /// </summary>
         public static void LinkShowData(ShowController show)
         {
+            ConfigureMusicImport();
             TextAsset sheet = null;
             AudioClip music = null;
             foreach (var name in new[] { "cues.json", "cues_test.json" })
@@ -123,6 +124,33 @@ namespace Fireworks.EditorTools
             show.cueSheet = sheet;
             show.music = music;
             EditorUtility.SetDirty(show);
+        }
+
+        /// <summary>
+        /// Songs are minutes long: keep them Vorbis-compressed in memory (sample-accurate PlayScheduled,
+        /// a few MB instead of tens of MB decompressed). Only touches files whose settings differ.
+        /// </summary>
+        public static void ConfigureMusicImport()
+        {
+            if (!AssetDatabase.IsValidFolder(MusicDir)) return;
+            foreach (var guid in AssetDatabase.FindAssets("t:AudioClip", new[] { MusicDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!(AssetImporter.GetAtPath(path) is AudioImporter imp)) continue;
+                var s = imp.defaultSampleSettings;
+                bool changed = s.loadType != AudioClipLoadType.CompressedInMemory
+                               || s.compressionFormat != AudioCompressionFormat.Vorbis
+                               || Mathf.Abs(s.quality - 0.7f) > 0.001f
+                               || !s.preloadAudioData;
+                if (!changed) continue;
+                s.loadType = AudioClipLoadType.CompressedInMemory;
+                s.compressionFormat = AudioCompressionFormat.Vorbis;
+                s.quality = 0.7f;
+                s.preloadAudioData = true;
+                imp.defaultSampleSettings = s;
+                imp.SaveAndReimport();
+                Debug.Log($"[Fireworks] music import set to Vorbis, compressed in memory: {path}");
+            }
         }
 
         static AudioClip MusicFor(TextAsset sheet)

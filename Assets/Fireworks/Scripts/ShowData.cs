@@ -16,6 +16,8 @@ namespace Fireworks
         public string credit = "";
         public float duration;
         public float bpm;
+        [Tooltip("Optional: song time of the big drop of a slow-burn song (0 or missing = none)")]
+        public float drop;
         public ShowSection[] sections = new ShowSection[0];
         public ShowCue[] cues = new ShowCue[0];
 
@@ -94,7 +96,17 @@ namespace Fireworks
             }
             secs.Sort((a, b) => a.start.CompareTo(b.start));
             sections = secs.ToArray();
+
+            if (drop < 0f || float.IsNaN(drop)) drop = 0f;
+            float last = LastEventTime();
+            if (drop > 0f && last > 0f && drop > last)
+            {
+                warnings?.Add($"drop {drop:0.00}s is after the last event ({last:0.00}s), ignored");
+                drop = 0f;
+            }
         }
+
+        public bool HasDrop => drop > 0f;
 
         /// <summary>Last moment anything in the sheet is scheduled to happen (seconds, song time).</summary>
         public float LastEventTime()

@@ -10021,7 +10021,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 1, b: 1, a: 0.38}
+      maxColor: {r: 1, g: 1, b: 1, a: 0.3}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -24583,7 +24583,7 @@ MonoBehaviour:
     whiteMix: 0.15
     scaleSpeed: 0
     scaleCount: 0
-    sizeExponent: 1
+    sizeExponent: 0.5
   - system: {fileID: 5472596104867005374}
     role: 1
     whiteMix: 0.6

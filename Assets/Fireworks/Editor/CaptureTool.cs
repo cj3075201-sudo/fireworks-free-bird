@@ -147,6 +147,15 @@ namespace Fireworks.EditorTools
 
             var times = new List<float>();
             if (stills != null) times.AddRange(stills);
+            else if (show.Data.HasDrop)
+            {
+                // Slow-burn song: just before the drop, the drop, after it, mid-solo and the last big hit.
+                float drop = show.Data.drop;
+                float lastHit = drop;
+                foreach (var c in show.Data.cues) if (c.hit && c.t > lastHit) lastHit = c.t;
+                times.AddRange(new[] { drop - 2f, drop + 0.3f, drop + 3f, (drop + lastHit) * 0.5f, lastHit + 0.3f });
+                report.AppendLine($"  drop={drop:0.00}s lastHit={lastHit:0.00}s");
+            }
             else
             {
                 // For an external sheet: one still per section, at its middle.

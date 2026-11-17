@@ -44,6 +44,10 @@ namespace Fireworks
         [Header("Hit flash")]
         [Tooltip("Screen flash opacity for a scale-1 hit cue")]
         [Range(0f, 0.5f)] public float hitFlash = 0.03f;
+        [Tooltip("Screen flash opacity at the drop (slow-burn songs). Kept low so the frame never burns white.")]
+        [Range(0f, 0.5f)] public float dropFlash = 0.08f;
+        [Tooltip("Decay of the drop screen flash, seconds")]
+        public float dropFlashDecay = 0.2f;
 
         [Header("Random")]
         [Tooltip("Seed for per-cue variation (wobble, tilt, sound choice). Same seed = same show.")]
@@ -131,7 +135,7 @@ namespace Fireworks
             if (SongLength <= 0f) SongLength = Data.LastEventTime();
             _endTime = Math.Max(SongLength, Data.LastEventTime());
 
-            if (director != null) director.Setup(Data.sections, (float)_endTime);
+            if (director != null) director.Setup(Data.sections, (float)_endTime, Data.HasDrop ? Data.drop : -1.0);
             if (ui != null)
             {
                 ui.SetTitle(title, subtitle);
@@ -498,15 +502,21 @@ namespace Fireworks
                     break;
                 case Stage.Credits:
                     creditA = Mathf.Clamp01((float)((now - _creditStart) / creditFadeTime));
-                    fade = 0.55f * creditA;
+                    fade = 0.65f * creditA;
                     break;
             }
 
             if (ui != null)
             {
                 ui.SetAlphas(fade, titleA, creditA);
-                float f = _flashAmount * Mathf.Exp(-Mathf.Max(0f, (float)(now - _flashTime)) / 0.09f);
-                ui.SetFlash(_flashColor, now >= _flashTime ? f : 0f);
+                float f = now >= _flashTime ? _flashAmount * Mathf.Exp(-Mathf.Max(0f, (float)(now - _flashTime)) / 0.09f) : 0f;
+                var tint = _flashColor;
+                if (Data != null && Data.HasDrop && now >= Data.drop)
+                {
+                    float d = dropFlash * Mathf.Exp(-(float)(now - Data.drop) / dropFlashDecay);
+                    if (d > f) { f = d; tint = new Color(0.9f, 0.93f, 1f); }
+                }
+                ui.SetFlash(tint, f);
             }
         }
 

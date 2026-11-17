@@ -209,7 +209,8 @@ namespace Fireworks.EditorTools
             {
                 var glow = Glow(burst, type == FireworkType.Willow ? 46f : 56f);
                 burstSys.Add(glow);
-                parts.Add(Part(glow, type == FireworkType.Willow ? ColorRole.WarmTint : ColorRole.Primary, 0.15f, false, false, 1f));
+                // sqrt(scale): big shells stack in salvos, and linear growth turned overlapping halos into haze.
+                parts.Add(Part(glow, type == FireworkType.Willow ? ColorRole.WarmTint : ColorRole.Primary, 0.15f, false, false, 0.5f));
                 var flash = Flash(burst);
                 burstSys.Add(flash);
                 parts.Add(Part(flash, ColorRole.Primary, 0.6f, false, false, 0.5f));
@@ -523,7 +524,7 @@ namespace Fireworks.EditorTools
             var main = ps.main;
             main.startLifetime = 0.9f;
             main.startSize = size;
-            main.startColor = new Color(1f, 1f, 1f, 0.38f);
+            main.startColor = new Color(1f, 1f, 1f, 0.3f);
             var em = ps.emission;
             em.SetBursts(new[] { new ParticleSystem.Burst(0f, new MinMax(1)) });
             var col = ps.colorOverLifetime;
