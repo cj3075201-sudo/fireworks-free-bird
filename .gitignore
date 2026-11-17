@@ -44,3 +44,7 @@ __pycache__/
 
 # Local review captures
 /Captures/
+
+# Regenerable large test audio (Tools/make_test_song.py --song slowburn)
+/Assets/Fireworks/Audio/Music/test_song_slowburn.wav
+/Assets/Fireworks/Audio/Music/test_song_slowburn.wav.meta

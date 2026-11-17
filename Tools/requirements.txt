@@ -1,0 +1,6 @@
+# Offline audio tools (Tools/). Tested with Python 3.14, numpy 2.4, scipy 1.18, matplotlib 3.11.
+numpy>=1.24
+scipy>=1.10
+# optional: timeline / spectrogram PNGs only
+matplotlib>=3.7
+# external (not pip): ffmpeg, only to read non-WAV audio such as mp3
