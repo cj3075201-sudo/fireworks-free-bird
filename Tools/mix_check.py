@@ -9,7 +9,7 @@ import numpy as np
 from scipy.signal import lfilter
 
 ROOT = sys.argv[1]
-GAINS = {"boom": 0.12, "pop": 0.14, "crackle": 0.17, "launch": 0.065, "whistle": 0.14, "loop": 0.14}
+GAINS = {"boom": 0.22, "pop": 0.25, "crackle": 0.3, "launch": 0.12, "whistle": 0.25, "loop": 0.25}
 MASTER = 1.0
 MUSIC_VOL = 0.85
 HIT = 1.6
@@ -119,6 +119,22 @@ def momentary(x):
 tm, Lm = momentary(music)
 _, Ls = momentary(sfx_st)
 mix = music + sfx_st
+
+def limiter(x, ceiling_db=-1.0, release=0.15):
+    # Same algorithm as MasterLimiter.cs: instant attack, exponential release.
+    ceil = 10 ** (ceiling_db / 20); coef = np.exp(-1 / (release * SR))
+    peak = np.abs(x).max(1); want = np.where(peak > ceil, ceil / np.maximum(peak, 1e-9), 1.0)
+    g = np.empty_like(want); gain = 1.0
+    hot = np.flatnonzero(want < 1.0)
+    if len(hot) == 0: return x, np.ones(len(x))
+    # Only the stretch from the first over onward needs the sample loop.
+    g[:hot[0]] = 1.0
+    for i in range(hot[0], len(want)):
+        w = want[i]; gain = w if w < gain else w + (gain - w) * coef; g[i] = gain
+    return x * g[:, None], g
+
+raw_peak = 20 * np.log10(np.abs(mix).max())
+mix, lim_gain = limiter(mix)
 _, Lx = momentary(mix)
 
 def integ(L):
@@ -127,7 +143,9 @@ def integ(L):
 
 print(f"gains master={MASTER} music={MUSIC_VOL} {GAINS}")
 print(f"integrated  music {integ(Lm):6.1f} LUFS | sfx {integ(Ls):6.1f} | mix {integ(Lx):6.1f}")
-print(f"mix sample peak {20*np.log10(np.abs(mix).max()):+.1f} dBFS, samples over 0 dBFS: {(np.abs(mix) > 1).sum()}")
+print(f"mix peak before limiter {raw_peak:+.1f} dBFS, after {20*np.log10(np.abs(mix).max()):+.1f} dBFS")
+gr = -20 * np.log10(lim_gain)
+print(f"limiter: max reduction {gr.max():.1f} dB, time reduced >1 dB {np.mean(gr > 1)*100:.2f}%, >3 dB {np.mean(gr > 3)*100:.2f}%")
 secs = [(s["name"], s["start"], s["end"]) for s in show["sections"]]
 drop = show.get("drop"); drop_end = show.get("drop_end")
 rows = [("eruption", drop, drop + 4.0)] if drop else []

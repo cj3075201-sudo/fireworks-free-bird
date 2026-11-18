@@ -25,16 +25,16 @@ namespace Fireworks
         [Header("Mix")]
         [Tooltip("Master SFX gain on top of the per-kind gains below.")]
         [Range(0f, 1f)] public float sfxVolume = 1f;
-        // Per-kind gains keep the music on top. Measured offline with Tools/mix_check.py against
-        // free_bird.ogg (-13.1 LUFS) at musicVolume 0.85: SFX sit about 8 dB under the music in the
-        // solo, about 5 dB under in the eruption and finale, and the summed mix peaks near 0 dBFS.
-        // At 1.0 (the WAVs' pre-mixed level) the SFX were 16-19 dB over the music and clipped.
-        [Tooltip("Large bursts")] [Range(0f, 1f)] public float boomGain = 0.12f;
-        [Tooltip("Small bursts, crossette splits")] [Range(0f, 1f)] public float popGain = 0.14f;
-        [Tooltip("Strobe and willow crackle")] [Range(0f, 1f)] public float crackleGain = 0.17f;
-        [Tooltip("Mortar launches. Lowest, because they run all the time")] [Range(0f, 1f)] public float launchGain = 0.065f;
-        [Tooltip("Comet whistles")] [Range(0f, 1f)] public float whistleGain = 0.14f;
-        [Tooltip("Fountain loop")] [Range(0f, 1f)] public float loopGain = 0.14f;
+        // Per-kind gains balance the SFX against the music. Measured offline with Tools/mix_check.py
+        // against free_bird.ogg (-13.1 LUFS) at musicVolume 0.85: SFX sit about 4 dB under the music
+        // in the solo and level with it in the eruption and finale; MasterLimiter catches the summed
+        // peaks. History: 1.0 (the WAVs' pre-mixed level) buried the music; 0.12 boom was too quiet.
+        [Tooltip("Large bursts")] [Range(0f, 1f)] public float boomGain = 0.22f;
+        [Tooltip("Small bursts, crossette splits")] [Range(0f, 1f)] public float popGain = 0.25f;
+        [Tooltip("Strobe and willow crackle")] [Range(0f, 1f)] public float crackleGain = 0.3f;
+        [Tooltip("Mortar launches. Lowest, because they run all the time")] [Range(0f, 1f)] public float launchGain = 0.12f;
+        [Tooltip("Comet whistles")] [Range(0f, 1f)] public float whistleGain = 0.25f;
+        [Tooltip("Fountain loop")] [Range(0f, 1f)] public float loopGain = 0.25f;
         [Tooltip("Extra gain on the burst sound of cues marked hit (big beats)")]
         [Range(1f, 3f)] public float hitAccent = 1.6f;
         [Tooltip("How far sounds pan with the firework's x position (0 = centred)")]
@@ -54,7 +54,13 @@ namespace Fireworks
         Voice[] _loops;
         bool _ready;
 
-        void Awake() => EnsureVoices();
+        void Awake()
+        {
+            EnsureVoices();
+            var listener = FindAnyObjectByType<AudioListener>();
+            if (listener != null && listener.GetComponent<MasterLimiter>() == null)
+                listener.gameObject.AddComponent<MasterLimiter>();
+        }
 
         void EnsureVoices()
         {
