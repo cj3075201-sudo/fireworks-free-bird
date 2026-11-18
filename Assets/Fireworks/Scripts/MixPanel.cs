@@ -7,12 +7,14 @@ namespace Fireworks
     /// <summary>
     /// Live volume panel, toggled with V during Play. Moves the music and the per-kind firework gains;
     /// sounds already playing follow at once (ShowAudio re-applies gains every frame).
-    /// In the editor every change is saved to Assets/Fireworks/Audio/mix.json, and that file is loaded
-    /// at startup, so the tuned mix travels with the repository. ShowAudio adds this component at runtime.
+    /// In the editor every change is saved to Assets/Fireworks/Resources/mix.json. That file is loaded at
+    /// startup (read from disk in the editor, as a Resources TextAsset in a player build), so the tuned
+    /// mix travels with the repository and the build. ShowAudio adds this component at runtime.
     /// </summary>
     public class MixPanel : MonoBehaviour
     {
-        public const string RelativePath = "Fireworks/Audio/mix.json";
+        public const string RelativePath = "Fireworks/Resources/mix.json";
+        const string ResourceName = "mix";
         const float MuteDb = -30f;     // slider bottom = off
         const float MaxBoostDb = 12f;
 
@@ -102,8 +104,16 @@ namespace Fireworks
         {
             try
             {
-                if (!File.Exists(FilePath)) return;
-                var m = JsonUtility.FromJson<MixSettings>(File.ReadAllText(FilePath));
+                string json = null;
+#if UNITY_EDITOR
+                // Straight from disk: the imported TextAsset can lag behind a save made during Play.
+                if (File.Exists(FilePath)) json = File.ReadAllText(FilePath);
+#else
+                var asset = Resources.Load<TextAsset>(ResourceName);
+                if (asset != null) json = asset.text;
+#endif
+                if (string.IsNullOrEmpty(json)) return;
+                var m = JsonUtility.FromJson<MixSettings>(json);
                 if (m == null) return;
                 Apply(m);
                 _status = "mix.json 값을 불러왔어요";

@@ -19,7 +19,7 @@ namespace Fireworks
         public TextAsset cueSheet;
         [Tooltip("Song. Leave empty to run on an internal clock.")]
         public AudioClip music;
-        [Range(0f, 1f)] public float musicVolume = 0.85f;
+        [Range(0f, 1f)] public float musicVolume = 0.6018f;
 
         [Header("References")]
         public FireworkLibrary library;

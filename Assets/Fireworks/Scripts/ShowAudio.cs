@@ -25,16 +25,15 @@ namespace Fireworks
         [Header("Mix")]
         [Tooltip("Master SFX gain on top of the per-kind gains below. Above 1 boosts.")]
         [Range(0f, 4f)] public float sfxVolume = 1f;
-        // Per-kind gains balance the SFX against the music. Measured offline with Tools/mix_check.py
-        // against free_bird.ogg (-13.1 LUFS) at musicVolume 0.85: SFX sit about 4 dB under the music
-        // in the solo and level with it in the eruption and finale; MasterLimiter catches the summed
-        // peaks. History: 1.0 (the WAVs' pre-mixed level) buried the music; 0.12 boom was too quiet.
-        [Tooltip("Large bursts")] [Range(0f, 1f)] public float boomGain = 0.22f;
-        [Tooltip("Small bursts, crossette splits")] [Range(0f, 1f)] public float popGain = 0.25f;
-        [Tooltip("Strobe and willow crackle")] [Range(0f, 1f)] public float crackleGain = 0.3f;
-        [Tooltip("Mortar launches. Lowest, because they run all the time")] [Range(0f, 1f)] public float launchGain = 0.12f;
-        [Tooltip("Comet whistles")] [Range(0f, 1f)] public float whistleGain = 0.25f;
-        [Tooltip("Fountain loop")] [Range(0f, 1f)] public float loopGain = 0.25f;
+        // Per-kind gains: the mix the user tuned by ear with the V panel (2026-11-18), same values as
+        // Resources/mix.json, which MixPanel loads at startup and which wins over these defaults.
+        // MasterLimiter catches summed peaks. Tools/mix_check.py measures the mix offline.
+        [Tooltip("Large bursts")] [Range(0f, 1f)] public float boomGain = 0.3014f;
+        [Tooltip("Small bursts, crossette splits")] [Range(0f, 1f)] public float popGain = 0.3517f;
+        [Tooltip("Strobe and willow crackle")] [Range(0f, 1f)] public float crackleGain = 0.427f;
+        [Tooltip("Mortar launches. Lowest, because they run all the time")] [Range(0f, 1f)] public float launchGain = 0.1633f;
+        [Tooltip("Comet whistles")] [Range(0f, 1f)] public float whistleGain = 0.2793f;
+        [Tooltip("Fountain loop")] [Range(0f, 1f)] public float loopGain = 0.3517f;
         [Tooltip("Extra gain on the burst sound of cues marked hit (big beats)")]
         [Range(1f, 3f)] public float hitAccent = 1.6f;
         [Tooltip("How far sounds pan with the firework's x position (0 = centred)")]
@@ -64,7 +63,7 @@ namespace Fireworks
             var listener = FindAnyObjectByType<AudioListener>();
             if (listener != null && listener.GetComponent<MasterLimiter>() == null)
                 listener.gameObject.AddComponent<MasterLimiter>();
-            // Live volume panel (V). Loads Assets/Fireworks/Audio/mix.json before the show starts.
+            // Live volume panel (V). Loads Resources/mix.json before the show starts.
             if (GetComponent<MixPanel>() == null) gameObject.AddComponent<MixPanel>();
         }
 

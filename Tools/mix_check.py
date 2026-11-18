@@ -15,10 +15,10 @@ MUSIC_VOL = 0.85
 HIT = 1.6
 # Values saved by the in-game volume panel (MixPanel) take precedence over the code defaults above.
 try:
-    _m = json.load(open(f"{ROOT}/Assets/Fireworks/Audio/mix.json", encoding="utf-8"))
+    _m = json.load(open(f"{ROOT}/Assets/Fireworks/Resources/mix.json", encoding="utf-8"))
     MUSIC_VOL, MASTER, HIT = _m["music"], _m["sfx"], _m["hitAccent"]
     GAINS.update({k: _m[k] for k in GAINS})
-    print("using Assets/Fireworks/Audio/mix.json")
+    print("using Assets/Fireworks/Resources/mix.json")
 except FileNotFoundError:
     pass
 for a in sys.argv[2:]:
