@@ -23,8 +23,8 @@ namespace Fireworks
         [Range(1, 8)] public int loopVoices = 3;
 
         [Header("Mix")]
-        [Tooltip("Master SFX gain on top of the per-kind gains below.")]
-        [Range(0f, 1f)] public float sfxVolume = 1f;
+        [Tooltip("Master SFX gain on top of the per-kind gains below. Above 1 boosts.")]
+        [Range(0f, 4f)] public float sfxVolume = 1f;
         // Per-kind gains balance the SFX against the music. Measured offline with Tools/mix_check.py
         // against free_bird.ogg (-13.1 LUFS) at musicVolume 0.85: SFX sit about 4 dB under the music
         // in the solo and level with it in the eruption and finale; MasterLimiter catches the summed
@@ -48,6 +48,10 @@ namespace Fireworks
             public float fadeFrom;
             public double fadeStart = -1, fadeEnd;
             public int owner = -1;
+            // Kept so the current mix gains can be re-applied while the sound plays (MixPanel).
+            public SfxKind kind;
+            public float baseVolume;
+            public bool accent;
         }
 
         readonly Dictionary<SfxKind, Voice[]> _voices = new Dictionary<SfxKind, Voice[]>();
@@ -60,21 +64,23 @@ namespace Fireworks
             var listener = FindAnyObjectByType<AudioListener>();
             if (listener != null && listener.GetComponent<MasterLimiter>() == null)
                 listener.gameObject.AddComponent<MasterLimiter>();
+            // Live volume panel (V). Loads Assets/Fireworks/Audio/mix.json before the show starts.
+            if (GetComponent<MixPanel>() == null) gameObject.AddComponent<MixPanel>();
         }
 
         void EnsureVoices()
         {
             if (_ready) return;
             _ready = true;
-            _voices[SfxKind.Boom] = MakeVoices("Boom", boomVoices, 64);
-            _voices[SfxKind.Pop] = MakeVoices("Pop", popVoices, 96);
-            _voices[SfxKind.Crackle] = MakeVoices("Crackle", crackleVoices, 110);
-            _voices[SfxKind.Launch] = MakeVoices("Launch", launchVoices, 120);
-            _voices[SfxKind.Whistle] = MakeVoices("Whistle", whistleVoices, 120);
-            _loops = MakeVoices("Loop", loopVoices, 100);
+            _voices[SfxKind.Boom] = MakeVoices("Boom", boomVoices, 64, SfxKind.Boom);
+            _voices[SfxKind.Pop] = MakeVoices("Pop", popVoices, 96, SfxKind.Pop);
+            _voices[SfxKind.Crackle] = MakeVoices("Crackle", crackleVoices, 110, SfxKind.Crackle);
+            _voices[SfxKind.Launch] = MakeVoices("Launch", launchVoices, 120, SfxKind.Launch);
+            _voices[SfxKind.Whistle] = MakeVoices("Whistle", whistleVoices, 120, SfxKind.Whistle);
+            _loops = MakeVoices("Loop", loopVoices, 100, SfxKind.Whistle);
         }
 
-        Voice[] MakeVoices(string label, int count, int priority)
+        Voice[] MakeVoices(string label, int count, int priority, SfxKind kind)
         {
             var arr = new Voice[count];
             for (int i = 0; i < count; i++)
@@ -86,7 +92,7 @@ namespace Fireworks
                 src.spatialBlend = 0f;
                 src.priority = priority;
                 src.dopplerLevel = 0f;
-                arr[i] = new Voice { src = src };
+                arr[i] = new Voice { src = src, kind = kind };
             }
             return arr;
         }
@@ -105,7 +111,7 @@ namespace Fireworks
         }
 
         /// <summary>Schedule a one-shot at absolute DSP time. Returns false when no clip exists for the kind.</summary>
-        public bool PlayAt(SfxKind kind, double dspTime, float volume, float x, float pitch, System.Random rng)
+        public bool PlayAt(SfxKind kind, double dspTime, float volume, float x, float pitch, System.Random rng, bool accent = false)
         {
             EnsureVoices();
             var clips = Clips(kind);
@@ -119,7 +125,9 @@ namespace Fireworks
             src.clip = clip;
             src.loop = false;
             src.pitch = pitch;
-            src.volume = Mathf.Clamp01(volume * KindGain(kind) * sfxVolume);
+            voice.baseVolume = volume;
+            voice.accent = accent;
+            src.volume = OneShotVolume(voice);
             src.panStereo = Mathf.Clamp(x / ShowData.MaxX, -1f, 1f) * panWidth;
             src.PlayScheduled(System.Math.Max(dspTime, AudioSettings.dspTime));
             voice.start = dspTime;
@@ -127,6 +135,9 @@ namespace Fireworks
             voice.fadeStart = -1;
             return true;
         }
+
+        float OneShotVolume(Voice v) => Mathf.Clamp01(v.baseVolume * (v.accent ? hitAccent : 1f) * KindGain(v.kind) * sfxVolume);
+        float LoopVolume(Voice v) => Mathf.Clamp01(v.baseVolume * loopGain * sfxVolume);
 
         float KindGain(SfxKind kind)
         {
@@ -173,7 +184,8 @@ namespace Fireworks
             voice.fadeStart = dspTime;
             voice.fadeEnd = dspTime + 0.25;
             voice.src.volume = 0f;
-            _loopTarget[voice] = Mathf.Clamp01(volume * loopGain * sfxVolume);
+            voice.baseVolume = volume;
+            _loopTarget[voice] = LoopVolume(voice);
         }
 
         readonly Dictionary<Voice, float> _loopTarget = new Dictionary<Voice, float>();
@@ -197,8 +209,18 @@ namespace Fireworks
         {
             if (_loops == null) return;
             double now = AudioSettings.dspTime;
+            // Re-apply the current gains to sounds still sounding, so panel changes are heard at once.
+            foreach (var kv in _voices)
+                foreach (var v in kv.Value)
+                    if (v.busyUntil > now) v.src.volume = OneShotVolume(v);
             foreach (var v in _loops)
             {
+                if (v.owner >= 0) // running (stopping loops have owner <= -2)
+                {
+                    float live = LoopVolume(v);
+                    _loopTarget[v] = live;
+                    if (v.fadeStart < 0) v.src.volume = live;
+                }
                 if (v.fadeStart < 0 || !_loopTarget.TryGetValue(v, out float target)) continue;
                 if (now < v.fadeStart) continue;
                 float u = (float)((now - v.fadeStart) / System.Math.Max(1e-3, v.fadeEnd - v.fadeStart));

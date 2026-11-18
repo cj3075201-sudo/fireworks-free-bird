@@ -82,6 +82,7 @@ namespace Fireworks
             public float volume;
             public float pitch;
             public float x;
+            public bool accent; // burst of a hit cue: ShowAudio.hitAccent applies at play time
             public int loopOwner; // >=0 start loop, <=-1 stop loop of (-1 - owner), int.MinValue = one-shot
         }
 
@@ -218,7 +219,6 @@ namespace Fireworks
                 // Relative loudness per shell; ShowAudio applies the per-kind mix gains on top.
                 // Scale only turns small shells down: 0.6 → 0.6, ≥1.0 → 1.0.
                 float loud = Mathf.Lerp(0.6f, 1f, Mathf.InverseLerp(ShowData.MinScale, 1f, c.scale));
-                float accent = c.hit && sfx != null ? sfx.hitAccent : 1f;
                 if (c.Type == FireworkType.Fountain)
                 {
                     _sounds.Add(new SoundEvent { time = s.burst, loopOwner = s.index, volume = loud, x = c.x });
@@ -236,7 +236,7 @@ namespace Fireworks
                 bool small = c.Type == FireworkType.Ring || c.scale < 1f;
                 // Bigger shells sound a little deeper.
                 float pitch = Pitch(r, 0.9f, 1.1f) * Mathf.Lerp(1.08f, 0.9f, Mathf.InverseLerp(ShowData.MinScale, ShowData.MaxScale, c.scale));
-                _sounds.Add(OneShot(s.burst, small ? SfxKind.Pop : SfxKind.Boom, loud * accent, pitch, c.x));
+                _sounds.Add(OneShot(s.burst, small ? SfxKind.Pop : SfxKind.Boom, loud, pitch, c.x, c.hit));
 
                 switch (c.Type)
                 {
@@ -257,9 +257,9 @@ namespace Fireworks
 
         static float Pitch(System.Random r, float lo, float hi) => Mathf.Lerp(lo, hi, (float)r.NextDouble());
 
-        static SoundEvent OneShot(double t, SfxKind kind, float vol, float pitch, float x)
+        static SoundEvent OneShot(double t, SfxKind kind, float vol, float pitch, float x, bool accent = false)
         {
-            return new SoundEvent { time = t, kind = kind, volume = vol, pitch = pitch, x = x, loopOwner = int.MinValue };
+            return new SoundEvent { time = t, kind = kind, volume = vol, pitch = pitch, x = x, accent = accent, loopOwner = int.MinValue };
         }
 
         // ------------------------------------------------------------------ pool
@@ -449,7 +449,7 @@ namespace Fireworks
                 var e = _sounds[_nextSound++];
                 if (e.time < now - 0.25) continue; // too late (after a hitch); skip rather than smear
                 double dsp = _dspStart + e.time;
-                if (e.loopOwner == int.MinValue) sfx.PlayAt(e.kind, dsp, e.volume, e.x, e.pitch, _soundRng);
+                if (e.loopOwner == int.MinValue) sfx.PlayAt(e.kind, dsp, e.volume, e.x, e.pitch, _soundRng, e.accent);
                 else if (e.loopOwner >= 0) sfx.StartLoop(e.loopOwner, dsp, e.volume, e.x);
                 else sfx.StopLoop(-1 - e.loopOwner, dsp);
             }

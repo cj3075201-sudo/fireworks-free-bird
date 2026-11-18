@@ -19,6 +19,10 @@ namespace Fireworks
         float _ceiling = 1f;
         float _releaseCoef = 0.999f;
         float _gain = 1f;
+        float _blockMinGain = 1f; // written by the audio thread, read by MixPanel
+
+        /// <summary>Deepest gain reduction in the last audio block, dB (0 = not limiting).</summary>
+        public float ReductionDb => -20f * Mathf.Log10(Mathf.Max(1e-4f, _blockMinGain));
 
         void OnEnable() => Recalc();
         void OnValidate() => Recalc();
@@ -33,7 +37,7 @@ namespace Fireworks
         // Audio thread: no allocations, no Unity API calls.
         void OnAudioFilterRead(float[] data, int channels)
         {
-            float ceiling = _ceiling, coef = _releaseCoef, gain = _gain;
+            float ceiling = _ceiling, coef = _releaseCoef, gain = _gain, minGain = 1f;
             for (int i = 0; i < data.Length; i += channels)
             {
                 float peak = 0f;
@@ -44,9 +48,11 @@ namespace Fireworks
                 }
                 float want = peak > ceiling ? ceiling / peak : 1f;
                 gain = want < gain ? want : want + (gain - want) * coef;
+                if (gain < minGain) minGain = gain;
                 for (int c = 0; c < channels; c++) data[i + c] *= gain;
             }
             _gain = gain;
+            _blockMinGain = minGain;
         }
     }
 }
