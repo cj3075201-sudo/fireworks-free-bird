@@ -23,8 +23,20 @@ namespace Fireworks
         [Range(1, 8)] public int loopVoices = 3;
 
         [Header("Mix")]
-        [Tooltip("Master SFX gain. The WAVs are pre-mixed for 1.0.")]
+        [Tooltip("Master SFX gain on top of the per-kind gains below.")]
         [Range(0f, 1f)] public float sfxVolume = 1f;
+        // Per-kind gains keep the music on top. Measured offline with Tools/mix_check.py against
+        // free_bird.ogg (-13.1 LUFS) at musicVolume 0.85: SFX sit about 8 dB under the music in the
+        // solo, about 5 dB under in the eruption and finale, and the summed mix peaks near 0 dBFS.
+        // At 1.0 (the WAVs' pre-mixed level) the SFX were 16-19 dB over the music and clipped.
+        [Tooltip("Large bursts")] [Range(0f, 1f)] public float boomGain = 0.12f;
+        [Tooltip("Small bursts, crossette splits")] [Range(0f, 1f)] public float popGain = 0.14f;
+        [Tooltip("Strobe and willow crackle")] [Range(0f, 1f)] public float crackleGain = 0.17f;
+        [Tooltip("Mortar launches. Lowest, because they run all the time")] [Range(0f, 1f)] public float launchGain = 0.065f;
+        [Tooltip("Comet whistles")] [Range(0f, 1f)] public float whistleGain = 0.14f;
+        [Tooltip("Fountain loop")] [Range(0f, 1f)] public float loopGain = 0.14f;
+        [Tooltip("Extra gain on the burst sound of cues marked hit (big beats)")]
+        [Range(1f, 3f)] public float hitAccent = 1.6f;
         [Tooltip("How far sounds pan with the firework's x position (0 = centred)")]
         [Range(0f, 1f)] public float panWidth = 0.6f;
 
@@ -101,13 +113,25 @@ namespace Fireworks
             src.clip = clip;
             src.loop = false;
             src.pitch = pitch;
-            src.volume = Mathf.Clamp01(volume * sfxVolume);
+            src.volume = Mathf.Clamp01(volume * KindGain(kind) * sfxVolume);
             src.panStereo = Mathf.Clamp(x / ShowData.MaxX, -1f, 1f) * panWidth;
             src.PlayScheduled(System.Math.Max(dspTime, AudioSettings.dspTime));
             voice.start = dspTime;
             voice.busyUntil = dspTime + clip.length / Mathf.Max(0.05f, pitch);
             voice.fadeStart = -1;
             return true;
+        }
+
+        float KindGain(SfxKind kind)
+        {
+            switch (kind)
+            {
+                case SfxKind.Boom: return boomGain;
+                case SfxKind.Pop: return popGain;
+                case SfxKind.Crackle: return crackleGain;
+                case SfxKind.Launch: return launchGain;
+                default: return whistleGain;
+            }
         }
 
         static Voice PickVoice(Voice[] voices, double at)
@@ -143,7 +167,7 @@ namespace Fireworks
             voice.fadeStart = dspTime;
             voice.fadeEnd = dspTime + 0.25;
             voice.src.volume = 0f;
-            _loopTarget[voice] = Mathf.Clamp01(volume * sfxVolume);
+            _loopTarget[voice] = Mathf.Clamp01(volume * loopGain * sfxVolume);
         }
 
         readonly Dictionary<Voice, float> _loopTarget = new Dictionary<Voice, float>();
